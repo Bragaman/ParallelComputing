@@ -12,9 +12,7 @@ int* createRandomMatrix(int n, int m){
   for(i; i < n; i++){
     int j=0;
     for(j; j < m; j++){
-      int tmp = rand()%100;
-      matrix[i*m + j] = (tmp < 10) ? tmp+=10 : tmp;
-
+      matrix[i*m + j] = rand()%2;
       // printf("%d %d %d; ",i, j, matrix[i*m + j] );
     }
   }
