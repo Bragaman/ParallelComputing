@@ -6,13 +6,13 @@
 #include <time.h>
 #include <stdlib.h>
 
-int* createRandomMatrix(int n, int m){
-  int *matrix = (int *)malloc(n * m * sizeof(int));
-  int i=0;
+long* createRandomMatrix(long n, long m){
+  long *matrix = (long *)malloc(n * m * sizeof(long));
+  long i=0;
   for(i; i < n; i++){
-    int j=0;
+    long j=0;
     for(j; j < m; j++){
-      int tmp = rand()%100;
+      long tmp = rand()%100;
       matrix[i*m + j] = (tmp < 10) ? tmp+=10 : tmp;
 
       // printf("%d %d %d; ",i, j, matrix[i*m + j] );
@@ -22,10 +22,10 @@ int* createRandomMatrix(int n, int m){
   return matrix;
 }
 
-void printMatrix(int *matrix, int n, int m){
-  int i=0;
+void printMatrix(long *matrix, long n, long m){
+  long i=0;
   for(i; i < n; i++){
-    int j=0;
+    long j=0;
     for(j; j < m; j++){
         printf("%d ", matrix[i*m + j]);
     }
@@ -34,28 +34,28 @@ void printMatrix(int *matrix, int n, int m){
   printf("\n");
 }
 
-int calcItem(int* matrixA, int* matrixB, int m, int n, int q, int x, int y){
-  int tmp=0;
-  int i=0;
+long calcItem(long* matrixA, long* matrixB, long m, long n, long q, long x, long y){
+  long tmp=0;
+  long i=0;
   for(i; i < n; i++){
     tmp+= matrixA[y*m+i]*matrixB[i*m+x];
   }
   return tmp;
 }
 
-void calc(int* matrixA, int* matrixB, int* matrixC, int m, int n, int q){
-  int i=0;
+void calc(long* matrixA, long* matrixB, long* matrixC, long m, long n, long q){
+  long i=0;
   for(i; i < m; i++){
-    int j=0;
+    long j=0;
     for(j; j < q; j++){
       matrixC[i*q + j] = calcItem(matrixA, matrixB, m,n,q, j, i);
     }
   }
 }
 
-int main(int argc, char const *argv[]) {
+long main(long argc, char const *argv[]) {
 
-  int m=0 ,n=0 ,q=0 ; //first row, fisrt column, second column
+  long m=0 ,n=0 ,q=0 ; //first row, fisrt column, second column
   srand(time(NULL));
   printf("enter count of row first matrix: ");
   scanf("%d",&m );
@@ -64,9 +64,9 @@ int main(int argc, char const *argv[]) {
   printf("enter count of column second matrix: ");
   scanf("%d",&q );
 
-  int* matrixA = createRandomMatrix(m, n);
-  int* matrixB = createRandomMatrix(n, q);
-  int* matrixC = (int*)malloc(m*q*sizeof(int));
+  long* matrixA = createRandomMatrix(m, n);
+  long* matrixB = createRandomMatrix(n, q);
+  long* matrixC = (long*)malloc(m*q*sizeof(long));
 
   printMatrix(matrixA, m, n);
   printMatrix(matrixB, n, q);

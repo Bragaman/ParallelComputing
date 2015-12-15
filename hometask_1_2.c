@@ -17,11 +17,11 @@
 
 #define SHM_MODE (SHM_W | SHM_R |  IPC_CREAT)
 
-int* createRandomMatrix(int n, int m){
-  int *matrix = (int *)malloc(n * m * sizeof(int));
-  int i=0;
+long* createRandomMatrix(long n, long m){
+  long *matrix = (long *)malloc(n * m * sizeof(long));
+  long i=0;
   for(i; i < n; i++){
-    int j=0;
+    long j=0;
     for(j; j < m; j++){
       matrix[i*m + j] = rand()%90 + 10;
       // printf("%d %d %d; ",i, j, matrix[i*m + j] );
@@ -31,10 +31,10 @@ int* createRandomMatrix(int n, int m){
   return matrix;
 }
 
-void printMatrix(int *matrix, int n, int m){
-  int i=0;
+void printMatrix(long *matrix, long n, long m){
+  long i=0;
   for(i; i < n; i++){
-    int j=0;
+    long j=0;
     for(j; j < m; j++){
         printf("%d ", matrix[i*m + j]);
     }
@@ -43,19 +43,19 @@ void printMatrix(int *matrix, int n, int m){
   printf("\n");
 }
 
-int calcItem(int* matrixA, int* matrixB, int m, int n, int q, int x, int y){
-  int tmp=0;
-  int i=0;
+long calcItem(long* matrixA, long* matrixB, long m, long n, long q, long x, long y){
+  long tmp=0;
+  long i=0;
   for(i; i < n; i++){
     tmp+= matrixA[y*m+i]*matrixB[i*m+x];
   }
   return tmp;
 }
 
-void calc(int* matrixA, int* matrixB, int* matrixC, int m, int n, int q, int processCount, int id){
-  int i=id;
+void calc(long* matrixA, long* matrixB, long* matrixC, long m, long n, long q, long processCount, long id){
+  long i=id;
   for(i; i < m; i+=processCount){
-    int j=0;
+    long j=0;
     for(j; j < q; j++){
       matrixC[i*q + j] = calcItem(matrixA, matrixB, m,n,q, j, i);
     }
@@ -64,7 +64,7 @@ void calc(int* matrixA, int* matrixB, int* matrixC, int m, int n, int q, int pro
 
 int main(int argc, char const *argv[]) {
 
-  int m=0 ,n=0 ,q=0, process=0; 
+  long m=0 ,n=0 ,q=0, process=0;
   //first row, fisrt column, second column, count of process
   srand(time(NULL));
   printf("enter count of row first matrix: ");
@@ -76,8 +76,8 @@ int main(int argc, char const *argv[]) {
   printf("enter count of process: ");
   scanf("%d", &process);
 
-  int* matrixA = createRandomMatrix(m, n);
-  int* matrixB = createRandomMatrix(n, q);
+  long* matrixA = createRandomMatrix(m, n);
+  long* matrixB = createRandomMatrix(n, q);
 
   printMatrix(matrixA, m, n);
   printMatrix(matrixB, n, q);
@@ -85,19 +85,19 @@ int main(int argc, char const *argv[]) {
   
   key_t key = 1995;
   pid_t* pid = malloc(sizeof(pid_t) * process);
-  int shmid;
+  long shmid;
 
-  if ((shmid = shmget(key, m*q*sizeof(int), IPC_CREAT | 0666)) == -1){ 
+  if ((shmid = shmget(key, m*q*sizeof(long), IPC_CREAT | 0666)) == -1){
     printf("Unsuccessful memory get \n");
     exit(-1);
   }
 
-  int i;
+  long i;
    for(i = 0; i < process; i++) {
       pid[i] = fork();
       if (pid[i] == 0)
       {
-        int* ans = (int *)shmat(shmid, NULL, 0);
+        long* ans = (long *)shmat(shmid, NULL, 0);
         calc( matrixA, matrixB, ans, m,n,q, process, i);
         return 0;
       }
@@ -106,7 +106,7 @@ int main(int argc, char const *argv[]) {
       waitpid (pid[i], NULL, 0);
   }
 
-  int* matrixC = (int*)shmat(shmid, NULL, 0);
+  long* matrixC = (long*)shmat(shmid, NULL, 0);
   printMatrix(matrixC, m, q);
   if (pid !=0)
      if (shmctl(shmid,IPC_RMID,0) < 0) 
