@@ -49,8 +49,11 @@ int main(void)
 		a+=step;
 		pthread_create(&ptr[i],NULL, threadFunc, (void*)arg[i]);
 
-   		pthread_join(ptr[i],NULL);
+
 	}
+    for(i=0; i <countOfThread; ++i)
+        pthread_join(ptr[i],NULL);
+
 	double summ = 0;
 	i=0;
 	for(; i < countOfThread; ++i)
