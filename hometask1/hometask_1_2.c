@@ -43,7 +43,7 @@ void calc(long *result, long *A, long *B, int rowA, int columnA, int columnB )
         for(j; j < columnB; ++j) {
             int k =0;
             for(k; k < columnA; ++k)
-                result[i*columnB + j] +=  A[i*columnA + k] + B[k*columnB + j];
+                result[i*columnB + j] +=  A[i*columnA + k] * B[k*columnB + j];
         }
     }
     printMatrix(result, rowA, columnB);
@@ -76,7 +76,7 @@ int calcParallel(long *result, long *A, long *B, int rowA, int columnA, int colu
                 for(j; j < columnB; j++) {
                     int k =0;
                     for(k; k < columnA; ++k)
-                        ans[i*columnB + j] +=  A[i*columnA + k] + B[k*columnB + j];
+                        ans[i*columnB + j] +=  A[i*columnA + k] * B[k*columnB + j];
                 }
             }
             return 0;

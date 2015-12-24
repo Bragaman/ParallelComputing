@@ -37,7 +37,7 @@ void calc(long *result, long *A, long *B, int rowA, int columnA, int columnB )
         for(j; j < columnB; ++j) {
             int k =0;
             for(k; k < columnA; ++k)
-                result[i*columnB + j] +=  A[i*columnA + k] + B[k*columnB + j];
+                result[i*columnB + j] +=  A[i*columnA + k] * B[k*columnB + j];
         }
     }
 }

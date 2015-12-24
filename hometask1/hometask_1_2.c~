@@ -1,118 +1,143 @@
 //Написать на языке C программу, запрашивающую у пользователя три натуральных числа:
 //количество строк в матрице  A, количество столбцов в матрице A и количество столбцов в матрице B
 //и реализующее умножение матриц  A и B . Матрицы заполняются случайными целыми двухзначными числами.
-//Программа должна вычислять результирующую матрицу параллельно в нескольких процессах.
-//Количество процессов является параметром в программе и может быть легко изменено.
-//Матрицы должны хранится в разделяемой памяти.
 
+#include "stdio.h"
 #include <time.h>
-#include <stddef.h>
 #include <stdlib.h>
-#include <stdio.h>
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
-#define SHM_MODE (SHM_W | SHM_R |  IPC_CREAT)
-
-long* createRandomMatrix(long n, long m){
-  long *matrix = (long *)malloc(n * m * sizeof(long));
-  long i=0;
-  for(i; i < n; i++){
-    long j=0;
-    for(j; j < m; j++){
-      matrix[i*m + j] = rand()%90 + 10;
-      // printf("%d %d %d; ",i, j, matrix[i*m + j] );
+long* createRandomMatrix(int n, int m){
+    long *matrix = (long *)malloc(n * m * sizeof(long));
+    int i=0;
+    for(i; i < n; i++) {
+        int j = 0;
+        for (j; j < m; j++)
+            matrix[i * m + j] = rand() % 90 +10;
     }
-  }
-  // printf("\n\n");
-  return matrix;
+    return matrix;
 }
 
-void printMatrix(long *matrix, long n, long m){
-  long i=0;
-  for(i; i < n; i++){
-    long j=0;
-    for(j; j < m; j++){
-        printf("%d ", matrix[i*m + j]);
+void printMatrix(long *matrix, int n, int m){
+    int i=0;
+    for(i; i < n; i++){
+        int j=0;
+        for(j; j < m; j++)
+            printf("%ld ", matrix[i*m + j]);
+
+        printf("\n");
     }
     printf("\n");
-  }
-  printf("\n");
 }
 
-long calcItem(long* matrixA, long* matrixB, long m, long n, long q, long x, long y){
-  long tmp=0;
-  long i=0;
-  for(i; i < n; i++){
-    tmp+= matrixA[y*m+i]*matrixB[i*m+x];
-  }
-  return tmp;
-}
-
-void calc(long* matrixA, long* matrixB, long* matrixC, long m, long n, long q, long processCount, long id){
-  long i=id;
-  for(i; i < m; i+=processCount){
-    long j=0;
-    for(j; j < q; j++){
-      matrixC[i*q + j] = calcItem(matrixA, matrixB, m,n,q, j, i);
+void calc(long *result, long *A, long *B, int rowA, int columnA, int columnB )
+{
+    int i=0;
+    for(i; i < rowA; ++i ) {
+        int j = 0;
+        for(j; j < columnB; ++j) {
+            int k =0;
+            for(k; k < columnA; ++k)
+                result[i*columnB + j] +=  A[i*columnA + k] * B[k*columnB + j];
+        }
     }
-  }
+    printMatrix(result, rowA, columnB);
 }
 
-int main(int argc, char const *argv[]) {
+int calcParallel(long *result, long *A, long *B, int rowA, int columnA, int columnB, int process )
+{
 
-  long m=0 ,n=0 ,q=0, process=0;
-  //first row, fisrt column, second column, count of process
-  srand(time(NULL));
-  printf("enter count of row first matrix: ");
-  scanf("%d", &m);
-  printf("enter count of column first matrix: ");
-  scanf("%d", &n);
-  printf("enter count of column second matrix: ");
-  scanf("%d", &q);
-  printf("enter count of process: ");
-  scanf("%d", &process);
+    key_t key = 1995;
 
-  long* matrixA = createRandomMatrix(m, n);
-  long* matrixB = createRandomMatrix(n, q);
+    pid_t* pid = (pid_t *) malloc(sizeof(pid_t) * process);
+    int shmid;
 
-  printMatrix(matrixA, m, n);
-  printMatrix(matrixB, n, q);
-
-  
-  key_t key = 1995;
-  pid_t* pid = malloc(sizeof(pid_t) * process);
-  long shmid;
-
-  if ((shmid = shmget(key, m*q*sizeof(long), IPC_CREAT | 0666)) == -1){
-    printf("Unsuccessful memory get \n");
-    exit(-1);
-  }
-
-  long i;
-   for(i = 0; i < process; i++) {
-      pid[i] = fork();
-      if (pid[i] == 0)
-      {
-        long* ans = (long *)shmat(shmid, NULL, 0);
-        calc( matrixA, matrixB, ans, m,n,q, process, i);
-        return 0;
-      }
-   }
-  for(i = 0; i < process; i++) {
-      waitpid (pid[i], NULL, 0);
-  }
-
-  long* matrixC = (long*)shmat(shmid, NULL, 0);
-  printMatrix(matrixC, m, q);
-  if (pid !=0)
-     if (shmctl(shmid,IPC_RMID,0) < 0) 
-      {  /* This destroys the memory queue */
-        printf("Problems destroying shared memory ID \n");
+    if ((shmid = shmget(key, rowA*columnB*sizeof(long), IPC_CREAT | 0666)) == -1){
+        printf("Unsuccessful memory get \n");
         exit(-1);
-      }
-  return 0;
+    }
+    int pr;
+
+
+
+    for(pr = 0; pr < process; pr++) {
+        pid[pr] = fork();
+        if (pid[pr] == 0)
+        {
+            long* ans = (long *)shmat(shmid, NULL, 0);
+            int i=pr;
+            for(i; i < rowA; i+=process ) {
+                int j = 0;
+                for(j; j < columnB; j++) {
+                    int k =0;
+                    for(k; k < columnA; ++k)
+                        ans[i*columnB + j] +=  A[i*columnA + k] + B[k*columnB + j];
+                }
+            }
+            return 0;
+        }
+    }
+    for(pr = 0; pr < process; pr++) {
+        waitpid (pid[pr], NULL, 0);
+    }
+
+
+
+
+
+    if (pid !=0) {
+        result = (long *) shmat(shmid, NULL, 0);
+        printMatrix(result, rowA, columnB);
+        if (shmctl(shmid, IPC_RMID, 0) < 0) {  /* This destroys the memory queue */
+            printf("Problems destroying shared memory ID \n");
+            exit(-1);
+        }
+    }
+}
+
+int main(long argc, char const *argv[]) {
+
+    int rowA =0 , columnA =0 , columnB =0 ; //first row, fisrt column, second column
+    int process;
+    srand(time(NULL));
+    printf("enter count of row first matrix: ");
+    scanf("%d",&rowA);
+    printf("enter count of column first matrix: ");
+    scanf("%d",&columnA);
+    printf("enter count of column second matrix: ");
+    scanf("%d",&columnB);
+    printf("enter count of process: ");
+    scanf("%d", &process);
+
+
+
+
+    long* matrixA = createRandomMatrix(rowA, columnA);
+    long* matrixB = createRandomMatrix(columnA, columnB);
+    long* matrixC = (long*)malloc(rowA * columnB * sizeof(long));
+    int i;
+    for(i = 0; i< rowA * columnB; ++i )
+        matrixC[i] = 0;
+
+    printMatrix(matrixA, rowA, columnA);
+    printMatrix(matrixB, columnA, columnB);
+
+    if(process < 1){
+        printf("i think that user say 1 process");
+        calc(matrixC, matrixA, matrixB, rowA, columnA, columnB);
+    }
+    if(process == 1)
+        calc(matrixC, matrixA, matrixB, rowA, columnA, columnB);
+
+    calcParallel(matrixC, matrixA, matrixB, rowA, columnA, columnB, process);
+
+
+
+
+    return 0;
 }
