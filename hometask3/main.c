@@ -9,7 +9,7 @@
 #include <omp.h>
 
 
-void changeCountOfThread(int count, int add)
+void changeCountOfThread(int &count, int add)
 {
 #pragma omp critical
     {
