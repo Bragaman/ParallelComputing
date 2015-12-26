@@ -4,20 +4,20 @@
 #include <omp.h>
 
 
-void changeCountOfThread(int &count, int add)
+void changeCountOfThread(int *count, int add)
 {
 #pragma omp critical
     {
-        count += add;
+       *count += add;
     }
 }
-bool canMakeNewThread(int count)
+int canMakeNewThread(int count)
 {
-    bool can = true;
+    int can = 1;
 #pragma omp critical
     {
         if (count  > 3)
-            can = false;
+            can = 0;
     }
     return can;
 }
@@ -66,8 +66,8 @@ void quickSortParallel(int* arr, int first, int last, int count)
             j--;
         }
     } while (i <= j);
-    if((last - first > 1000) && canMakeNewThread(count)) {
-        changeCountOfThread(count, 1);
+    if((last - first > 1000) && (1 == canMakeNewThread(count))) {
+        changeCountOfThread(&count, 1);
         #pragma omp parallel sections
         {
             #pragma omp section

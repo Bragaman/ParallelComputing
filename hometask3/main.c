@@ -4,23 +4,6 @@
 #include <omp.h>
 
 
-void changeCountOfThread(int *count, int add)
-{
-#pragma omp critical
-    {
-       *count += add;
-    }
-}
-int canMakeNewThread(int count)
-{
-    int can = 1;
-#pragma omp critical
-    {
-        if (count  > 3)
-            can = 0;
-    }
-    return can;
-}
 
 void quickSort(int* arr, int first, int last)
 {
@@ -47,11 +30,12 @@ void quickSort(int* arr, int first, int last)
         quickSort(arr, first, j);
 }
 
-void quickSortParallel(int* arr, int first, int last, int count)
+void quickSortParallel(int* arr, int first, int last)
 {
 
     int i = first, j = last, x = arr[(first + last) / 2];
-
+    omp_set_nested(1);
+    omp_set_max_active_levels(2);
     do {
         while (arr[i] < x) i++;
         while (arr[j] > x) j--;
@@ -66,21 +50,19 @@ void quickSortParallel(int* arr, int first, int last, int count)
             j--;
         }
     } while (i <= j);
-    if((last - first > 1000) && (1 == canMakeNewThread(count))) {
-        changeCountOfThread(&count, 1);
+    if((last - first > 1000) && (omp_get_active_level() < omp_get_max_active_levels())) {
         #pragma omp parallel sections
         {
             #pragma omp section
-            quickSortParallel(arr, i, last, count);
+            quickSortParallel(arr, i, last);
             #pragma omp section
-            quickSortParallel(arr, first, j, count);
+            quickSortParallel(arr, first, j);
         }
-//        changeCountOfThread(count, -1 );
     } else {
         if (i < last)
-            quickSortParallel(arr, i, last, count);
+            quickSortParallel(arr, i, last);
         if (first < j)
-            quickSortParallel(arr, first, j, count);
+            quickSortParallel(arr, first, j);
     }
 }
 
@@ -102,7 +84,7 @@ int main(void)
 {
     int i;
 //    int N = 18000000;
-    int N = 50000000;
+    int N = 60000000;
     int *arr;
     arr = (int *) malloc(sizeof(int) * N);
     for(i = 0; i < N; i++) {
@@ -119,8 +101,10 @@ int main(void)
         arr[i] = rand() % 50;
     }
 
+
+
     t1 = omp_get_wtime();
-    quickSortParallel(arr, 0, N, 1);
+    quickSortParallel(arr, 0, N);
     t2 = omp_get_wtime();
     printf("%f it is multi tread\n", t2-t1);
     validateArray(N, arr);
